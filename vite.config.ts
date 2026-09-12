@@ -50,11 +50,27 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    optimizeDeps: {
+      noDiscovery: true,
+      include: [],
+    },
     server: {
       ...(managedLinux ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] } : {}),
       ...(isCodexSeatbeltSandbox ? { watch: { useFsEvents: false, usePolling: true } } : {}),
     },
     plugins: [
+      {
+        name: "disable-dep-optimizer",
+        configEnvironment() {
+          return {
+            optimizeDeps: {
+              noDiscovery: true,
+              include: [],
+            },
+          };
+        },
+      },
+      
       vinext(),
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },

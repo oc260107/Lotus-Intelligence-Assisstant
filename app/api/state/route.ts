@@ -17,10 +17,23 @@ function ensureStarter(s:State):StarterConversation{if(!s.starter)s.starter={mes
 function starterCandidate(s:State){const d=s.starter?.draft||{};return {...d,name:(d.name||`${d.from||'Trip'} → ${d.to||'Trip'}`).slice(0,70),passengers:d.passengers??1,baggage:d.baggage??s.profile.baggage??23,transit:d.transit??24,seat:d.seat||s.profile.seat||'No preference'};}
 function starterReady(s:State){return intent.safeParse(starterCandidate(s)).success;}
 function normText(text:string){return text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
-function affirmative(text:string){const n=normText(text);return /^(co|duoc|ok|okay|yes|yep|dong y|chuyen sang|chuyen sang lua chon tot nhat|lay cai do|chon cai do|duoc chuyen sang cho toi)$/.test(n)||/^(co|duoc|ok|yes)\b/.test(n);}
+function affirmative(text:string){
+ const n=normText(text);
+ // Keep this deliberately narrow. `co chuyen nao ...?` is a search question, not a yes.
+ return /^(co|duoc|ok|okay|yes|yep|dong y|uh|uhm|oke)$/.test(n)
+  || /^(co|duoc|ok|okay|yes|dong y) (nhe|nha|a|di|luon)$/.test(n)
+  || /^(co|duoc|ok|okay|yes|dong y) (hay )?(chon|lay|cho toi|chuyen sang) (chuyen|lua chon|option|cai) (nay|do|vua recommend|vua de xuat|tot nhat)$/.test(n)
+  || /^(lay|chon|cho toi|chuyen sang) (chuyen|lua chon|option|cai) (nay|do|vua recommend|vua de xuat|tot nhat)$/.test(n)
+  || /^(go with|take|choose|select) (this|that|the recommended|the best) (one|option|flight)?$/.test(n);
+}
 function negative(text:string){const n=normText(text);return /^(khong|khong can|thoi|no|nope|cancel|bo qua)$/.test(n);}
 function statusQuestion(text:string){const n=normText(text);return /\b(xong chua|xong roi chua|da xong chua|da doi chua|status|done yet|is it done)\b/.test(n);}
-function selectionCommand(text:string){const n=normText(text);return /\b(chuyen sang|chon|lay)\b.*\b(lua chon|chuyen|cai do|tot nhat)\b/.test(n)||/\bselect\b.*\b(best|option)\b/.test(n);}
+function selectionCommand(text:string){
+ const n=normText(text);
+ return /\b(chon|lay|book|select|choose|take)\b.*\b(chuyen|lua chon|option|cai|recommended|recommend|de xuat|nay|do|tot nhat)\b/.test(n)
+  || /\b(cho toi|chuyen sang|go with)\b.*\b(chuyen|lua chon|option|cai|recommended|recommend|de xuat|nay|do|tot nhat)\b/.test(n)
+  || /^(chuyen|lua chon|option|cai) (nay|do|vua recommend|vua de xuat)$/.test(n);
+}
 function clearSelectionIfIntentChanged(st:StarterConversation,patch:Partial<Intent>){if(['from','to','start'].some(k=>k in patch)){st.selectedOfferId=null;st.selectedOffer=null;st.pendingSuggestion=undefined;st.lastSearch=undefined;st.phase='collecting';}}
 function mergeSearchFilters(st:StarterConversation,q:StarterOfferQuery):StarterSearchFilters{
  const f:{[key:string]:unknown}={...(st.searchFilters||{})};
@@ -40,12 +53,31 @@ function fallbackSearchReply(result:StarterFlightSearchResult){
  if(result.sameDateNearMisses.length){const n=result.sameDateNearMisses[0];return `Không có chuyến thỏa toàn bộ điều kiện vào đúng ngày ${result.requestedDate}. Lựa chọn gần nhất là ${shortOffer(n)}.\nKhông đạt vì: ${n.violations.join(' ')}\nCó thể nới nhỏ nhất bằng cách: ${n.relaxations.join(' ')}\n\nĐây là dữ liệu giả lập của prototype.`;}
  return `Dataset demo có route này nhưng không có record phù hợp với ngày/bộ lọc hiện tại. Mình sẽ không tự bịa chuyến bay. ${result.requestedDate?'Bạn có thể đổi ngày hoặc nới một điều kiện.':''}`;
 }
-function saveLastSearch(st:StarterConversation,text:string,result:StarterFlightSearchResult){st.lastSearch={query:text,requestedDate:result.requestedDate,exactMatchIds:result.exactMatches.map(x=>x.id),nearbyMatchIds:result.nearbyMatches.map(x=>x.id),nearMissIds:result.sameDateNearMisses.map(x=>x.id),recommendedOfferId:result.recommended?.id||null,filters:{...(st.searchFilters||{})},searchedAt:new Date().toISOString()};if(result.exactMatches.length){st.pendingSuggestion=undefined;st.phase='searching';}else if(result.nearbyMatches.length){const best=result.nearbyMatches[0];st.pendingSuggestion={kind:'switch_departure',offerId:best.id,departureDate:best.departureDate,reason:'No exact-date match; nearest suitable alternative.',filters:{...(st.searchFilters||{})},created:new Date().toISOString()};st.phase='awaiting-confirmation';}else{st.pendingSuggestion=undefined;st.phase='searching';}}
+function saveLastSearch(st:StarterConversation,text:string,result:StarterFlightSearchResult){
+ st.lastSearch={query:text,requestedDate:result.requestedDate,exactMatchIds:result.exactMatches.map(x=>x.id),nearbyMatchIds:result.nearbyMatches.map(x=>x.id),nearMissIds:result.sameDateNearMisses.map(x=>x.id),recommendedOfferId:result.recommended?.id||null,filters:{...(st.searchFilters||{})},searchedAt:new Date().toISOString()};
+ if(result.exactMatches.length){
+  const best=result.recommended||result.exactMatches[0];
+  st.pendingSuggestion={kind:'select_offer',offerId:best.id,departureDate:best.departureDate,reason:'Best exact-date match from the latest search.',filters:{...(st.searchFilters||{})},created:new Date().toISOString()};
+  st.phase='awaiting-confirmation';
+ }else if(result.nearbyMatches.length){
+  const best=result.recommended||result.nearbyMatches[0];
+  st.pendingSuggestion={kind:'switch_departure',offerId:best.id,departureDate:best.departureDate,reason:'No exact-date match; nearest suitable alternative.',filters:{...(st.searchFilters||{})},created:new Date().toISOString()};
+  st.phase='awaiting-confirmation';
+ }else{st.pendingSuggestion=undefined;st.phase='searching';}
+}
 function selectedReply(st:StarterConversation){if(!st.selectedOfferId)return 'Bạn chưa chọn chuyến nào. Mình có thể tìm và xếp hạng các lựa chọn trước.';const c=getStarterFlightById(st.selectedOfferId,st.draft.passengers??1);if(!c)return 'Chuyến đã chọn không còn tồn tại trong dataset demo hiện tại. Mình cần tìm lại.';return `Chuyến đang được chọn là ${shortOffer(c)}. Ngày đi trong Travel Intent hiện là ${st.draft.start||c.departureDate}${st.draft.end?`, ngày về vẫn là ${st.draft.end}`:''}.`;
 }
 function statusReply(st:StarterConversation){if(st.pendingSuggestion){const c=getStarterFlightById(st.pendingSuggestion.offerId,st.draft.passengers??1);return `Mình đã tìm xong nhưng đang chờ bạn xác nhận. Đề xuất hiện tại là ${c?shortOffer(c):st.pendingSuggestion.offerId}. Nếu đồng ý, chỉ cần nói “có” hoặc “chuyển sang lựa chọn đó”.`; }if(st.selectedOfferId)return `Xong phần chọn chuyến đi. ${selectedReply(st)}`;if(st.lastSearch?.recommendedOfferId){const c=getStarterFlightById(st.lastSearch.recommendedOfferId,st.draft.passengers??1);return `Mình đã tìm xong. Lựa chọn được recommend gần nhất là ${c?shortOffer(c):st.lastSearch.recommendedOfferId}, nhưng bạn chưa xác nhận chọn.`;}return 'Chưa có search hoàn chỉnh để xác nhận. Bạn hãy cho mình route/ngày và yêu cầu tìm chuyến.';}
 function reverseLegNote(st:StarterConversation){const from=st.draft.to,to=st.draft.from;if(!from||!to||!st.draft.end)return '';const count=getStarterRouteCount(from,to);return count>0?` Dataset có ${count} record cho chặng về ${from} → ${to}; bạn có thể yêu cầu mình tìm chuyến về ngày ${st.draft.end}.`:` Ngày về ${st.draft.end} vẫn được giữ trong Travel Intent, nhưng dataset demo hiện chưa có record ${from} → ${to}, nên mình chưa thể tìm chặng về mà không bịa dữ liệu.`;}
-function acceptSuggestion(st:StarterConversation){const p=st.pendingSuggestion;if(!p)return null;st.draft.start=p.departureDate;st.selectedOfferId=p.offerId;st.searchFilters={...p.filters};st.pendingSuggestion=undefined;st.phase='selected';const c=getStarterFlightById(p.offerId,st.draft.passengers??1);st.selectedOffer=c?selectedSnapshot(c):null;return `Đã xác nhận. Mình đã chuyển ngày đi sang ${p.departureDate} và chọn ${c?shortOffer(c):p.offerId}.${reverseLegNote(st)}`;}
+function acceptSuggestion(st:StarterConversation){
+ const p=st.pendingSuggestion;if(!p)return null;
+ const previousStart=st.draft.start;
+ if(p.kind==='switch_departure')st.draft.start=p.departureDate;
+ st.selectedOfferId=p.offerId;st.searchFilters={...p.filters};st.pendingSuggestion=undefined;st.phase='selected';
+ const c=getStarterFlightById(p.offerId,st.draft.passengers??1);st.selectedOffer=c?selectedSnapshot(c):null;
+ if(p.kind==='switch_departure')return `Đã xác nhận. Mình đã đổi ngày đi từ ${previousStart||'ngày cũ'} sang ${p.departureDate} và chọn ${c?shortOffer(c):p.offerId}.${reverseLegNote(st)}`;
+ return `Đã xác nhận và chọn ${c?shortOffer(c):p.offerId} làm chuyến hiện tại. Travel Intent vẫn giữ ngày đi ${st.draft.start||p.departureDate}.${reverseLegNote(st)}`;
+}
 function selectRecommended(st:StarterConversation){const id=st.lastSearch?.recommendedOfferId;if(!id)return null;const c=getStarterFlightById(id,st.draft.passengers??1);if(!c)return null;if(st.lastSearch?.nearbyMatchIds.includes(id)&&st.draft.start!==c.departureDate){st.pendingSuggestion={kind:'switch_departure',offerId:id,departureDate:c.departureDate,reason:'Recommended nearby-date option.',filters:{...(st.searchFilters||{})},created:new Date().toISOString()};return acceptSuggestion(st);}st.selectedOfferId=id;st.selectedOffer=selectedSnapshot(c);st.phase='selected';return `Đã chọn ${shortOffer(c)} làm lựa chọn hiện tại.${reverseLegNote(st)}`;}
 async function runStarterSearch(s:State,text:string,q:StarterOfferQuery){const st=ensureStarter(s);mergeSearchFilters(st,q);const filters=buildStarterSearch(s);if(!filters)return {reply:'Mình cần ít nhất điểm đi và điểm đến trước khi tìm trong dataset demo.',result:null};st.phase='searching';const result=searchStarterFlights(filters);saveLastSearch(st,text,result);let reply=await explainStarterSearchWithLlm(text,currentQuery(st,true),result);if(!reply)reply=fallbackSearchReply(result);return {reply,result};}
 async function load(id:string,profileName:string){const db=database();await db.prepare('INSERT OR IGNORE INTO workspaces (owner,payload,revision) VALUES (?,?,0)').bind(id,JSON.stringify(initialState(profileName))).run();return (await db.prepare('SELECT payload,revision FROM workspaces WHERE owner=?').bind(id).first()) as {payload:string;revision:number};}
@@ -58,6 +90,7 @@ else if(b.action==='starter_chat'){
  if(st.pendingSuggestion&&affirmative(text)){action='accept_suggestion';reply=acceptSuggestion(st)||'';}
  else if(st.pendingSuggestion&&negative(text)){action='reject_suggestion';st.pendingSuggestion=undefined;st.phase='searching';reply='Được, mình giữ nguyên Travel Intent hiện tại và không chuyển sang đề xuất đó. Bạn có thể đổi điều kiện hoặc yêu cầu tìm lại.';}
  else if(statusQuestion(text)){action='check_status';reply=statusReply(st);}
+ else if(selectionCommand(text)&&st.pendingSuggestion){action='accept_suggestion';reply=acceptSuggestion(st)||statusReply(st);}
  else if(selectionCommand(text)&&st.lastSearch?.recommendedOfferId){action='select_recommended';reply=selectRecommended(st)||statusReply(st);}
  else {
   await consumeLlmQuota(id);const answer=await startChatWithLlm(st.draft,st.messages,text,s.profile,st);action=answer.action;offerQuery=answer.offerQuery;clearSelectionIfIntentChanged(st,answer.patch);st.draft={...st.draft,...answer.patch};

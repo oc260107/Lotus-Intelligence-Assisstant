@@ -2,7 +2,7 @@ import { database } from '@/lib/server-db';
 
 const COOKIE_NAME = 'lia_session';
 const USER_SESSION_SECONDS = 60 * 60 * 24 * 30;
-const GUEST_SESSION_SECONDS = 60 * 60 * 24;
+const GUEST_SESSION_SECONDS = 60 * 60 * 8;
 const PBKDF2_ITERATIONS = 210_000;
 
 type SessionKind = 'user' | 'guest';
@@ -212,7 +212,10 @@ export async function createSession(
     )
     .run();
 
-  return sessionCookie(request, token, maxAge);
+  // Account cookies persist. Guest cookies are browser-session-only so a closed
+  // browser does not reopen the previous guest conversation. The server-side
+  // row still has a short expiry so abandoned guest data can be cleaned safely.
+  return sessionCookie(request, token, identity.kind === 'user' ? maxAge : null);
 }
 
 export async function destroySession(request: Request): Promise<string> {
@@ -220,12 +223,12 @@ export async function destroySession(request: Request): Promise<string> {
   return sessionCookie(request, '', 0);
 }
 
-function sessionCookie(request: Request, token: string, maxAge: number): string {
+function sessionCookie(request: Request, token: string, maxAge: number | null): string {
   const secure = new URL(request.url).protocol === 'https:';
   return [
     `${COOKIE_NAME}=${encodeURIComponent(token)}`,
     'Path=/',
-    `Max-Age=${maxAge}`,
+    maxAge === null ? '' : `Max-Age=${maxAge}`,
     'HttpOnly',
     'SameSite=Lax',
     secure ? 'Secure' : '',

@@ -55,3 +55,15 @@ The local prototype account layer now requires **both an email address and an in
 ## Protected personal profile
 
 Registered users must complete a Personal information profile before account workspace actions are enabled. Saved fields include name, DOB, Passport/CCCD or National ID, email, phone and home address. DOB, address and identity-document data are encrypted at rest with AES-GCM in `user_profiles`; the key is kept separately in the ignored local `.dev.vars`. These identity fields are not passed to the local LLM. Once onboarding is complete, users can edit personal information and save travel preferences such as seat, baggage and family travel.
+
+## Fix lỗi
+taskkill /IM workerd.exe /F
+if exist node_modules\.vite rmdir /s /q node_modules\.vite
+if exist .vinext rmdir /s /q .vinext
+if exist .next rmdir /s /q .next
+if exist .wrangler\dev-registry rmdir /s /q .wrangler\dev-registry
+if exist .wrangler\registry rmdir /s /q .wrangler\registry
+set NODE_OPTIONS=
+set CLOUDFLARE_CF_FETCH_ENABLED=false
+set WRANGLER_SEND_METRICS=false
+pnpm dev

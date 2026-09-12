@@ -58,12 +58,21 @@ Registered users must complete a Personal information profile before account wor
 
 ## Fix lỗi
 taskkill /IM workerd.exe /F
+
 if exist node_modules\.vite rmdir /s /q node_modules\.vite
+
 if exist .vinext rmdir /s /q .vinext
+
 if exist .next rmdir /s /q .next
+
 if exist .wrangler\dev-registry rmdir /s /q .wrangler\dev-registry
+
 if exist .wrangler\registry rmdir /s /q .wrangler\registry
+
 set NODE_OPTIONS=
+
 set CLOUDFLARE_CF_FETCH_ENABLED=false
+
 set WRANGLER_SEND_METRICS=false
+
 pnpm dev

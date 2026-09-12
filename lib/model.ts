@@ -2,12 +2,17 @@ export type Intent = {name:string;from:string;to:string;start:string;end:string;
 export type Offer = {id:string;datasetId?:string;label:string;price:number;transit:number;hours:number;baggage:number;miles:number;flight:string;score:number;departureTime?:string;arrivalTime?:string;stops?:number;flexibility?:'Basic'|'Standard'|'Flexible';source?:'synthetic-demo-dataset'|'simulated-demo-observation'};
 export type PreferenceDimension='price'|'transit'|'journey_time'|'baggage'|'miles';
 export type PreferenceEvidence={id:string;tripId:string;offerId:string;dimension:PreferenceDimension;created:string};
+export type StarterTripMode='unspecified'|'one-way'|'round-trip';
+export type StarterDateMode='fixed'|'window';
+export type StarterLeg='outbound'|'return';
 export type StarterSearchFilters={
   maxPrice?:number|null;
   maxTransit?:number|null;
   minBaggage?:number|null;
   directOnly?:boolean|null;
+  requireTransit?:boolean|null;
   transitVia?:string|null;
+  excludeChina?:boolean|null;
   sortBy?:'best'|'price'|'duration'|'transit';
   limit?:number;
 };
@@ -25,7 +30,19 @@ export type StarterSelectedOffer={
   transitCity:string;
   transitMinutes:number;
   baggageKg:number;
+  flightReference?:string;
+  fareType?:string;
+  flexibility?:string;
   selectedAt:string;
+};
+export type StarterRoundTripCombo={
+  id:string;
+  outbound:StarterSelectedOffer;
+  return:StarterSelectedOffer;
+  totalPriceAUD:number;
+  totalDurationMinutes:number;
+  totalTransitMinutes:number;
+  rankingScore:number;
 };
 export type StarterPendingSuggestion={
   kind:'switch_departure'|'select_offer';
@@ -37,11 +54,13 @@ export type StarterPendingSuggestion={
 };
 export type StarterLastSearch={
   query:string;
+  leg?:StarterLeg;
   requestedDate:string|null;
   exactMatchIds:string[];
   nearbyMatchIds:string[];
   nearMissIds:string[];
   recommendedOfferId:string|null;
+  offers?:StarterSelectedOffer[];
   filters:StarterSearchFilters;
   searchedAt:string;
 };
@@ -50,14 +69,24 @@ export type StarterConversation={
   draft:Partial<Intent>;
   searchFilters?:StarterSearchFilters;
   pendingSuggestion?:StarterPendingSuggestion;
-  selectedOfferId?:string|null;
-  selectedOffer?:StarterSelectedOffer|null;
+  selectedOfferId?:string|null; // backwards-compatible alias of outbound
+  selectedOffer?:StarterSelectedOffer|null; // backwards-compatible alias of outbound
+  selectedOutboundOffer?:StarterSelectedOffer|null;
+  selectedReturnOffer?:StarterSelectedOffer|null;
   lastSearch?:StarterLastSearch;
+  outboundSearch?:StarterLastSearch;
+  returnSearch?:StarterLastSearch;
+  roundTripCombos?:StarterRoundTripCombo[];
+  tripMode?:StarterTripMode;
+  dateMode?:StarterDateMode;
+  activeLeg?:StarterLeg;
+  returnSuggestionPending?:boolean;
+  checkoutStage?:'none'|'offer-payment'|'monitoring';
   phase?:'collecting'|'searching'|'awaiting-confirmation'|'selected';
 };
 export type RetrievalSummary={source:'synthetic-demo-dataset';datasetSize:number;routeMatches:number;shown:number};
 export type AiRecommendation={offerId:string;summary:string;reasons:string[];tradeoffs:string[];created:string;model:string};
-export type Trip = Intent & {id:string;status:string;selectedOffer?:StarterSelectedOffer|null;messages:{role:string;text:string}[];history:{date:string;price:number}[];offers:Offer[];retrieval?:RetrievalSummary;aiRecommendation?:AiRecommendation;checkedAt?:string;feedback?:string;version:number;pendingIntent?:{id:string;patch:Partial<Intent>;baseVersion:number}};
+export type Trip = Intent & {id:string;status:string;selectedOffer?:StarterSelectedOffer|null;selectedReturnOffer?:StarterSelectedOffer|null;searchFilters?:StarterSearchFilters;messages:{role:string;text:string}[];history:{date:string;price:number}[];offers:Offer[];retrieval?:RetrievalSummary;aiRecommendation?:AiRecommendation;checkedAt?:string;feedback?:string;version:number;pendingIntent?:{id:string;patch:Partial<Intent>;baseVersion:number}};
 export type State = {trips:Trip[];profile:{name:string;member:boolean;personalize:boolean;notifications:boolean;seat:string;baggage:number;family:boolean};notifications:{id:string;tripId:string;text:string;read:boolean}[];bookings:{id:string;tripId:string;offer:Offer;seat:string;extraBag:boolean;total:number;created:string;status:string}[];preferenceEvidence:PreferenceEvidence[];starter?:StarterConversation};
 export const blankIntent:Intent={name:'',from:'SYD',to:'HAN',start:'2026-12-10',end:'2026-12-28',budget:1200,passengers:1,baggage:23,transit:4,seat:'Aisle'};
 export function initialState(profileName='Traveller'):State {return {trips:[],profile:{name:profileName,member:false,personalize:false,notifications:true,seat:'Aisle',baggage:23,family:false},notifications:[],bookings:[],preferenceEvidence:[]};}

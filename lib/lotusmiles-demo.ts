@@ -45,11 +45,11 @@ export function lotusmilesDemoBenefits(profile:LotusmilesDemoProfile,input:{pass
     },
     {
       id:'demo-preferred-seat',kind:'preferred-seat',
-      title:'Preferred seat selection · demo member benefit',
-      description:'Show preferred-seat selection as AUD 0 in this prototype member journey instead of making the traveller manually remember the benefit.',
+      title:'Check preferred-seat member value · demo',
+      description:'Surface preferred-seat eligibility during checkout so the traveller does not need to look up Lotusmiles benefits manually.',
       milesCost:0,milesCostPerTraveller:0,
       available:member,
-      reason:member?`${tier} demo context is active.`:'Connect the Lotusmiles member experience first.',
+      reason:member?`${tier} demo context is active; complimentary or discounted seat eligibility still requires VNA verification.`:'Connect the Lotusmiles member experience first.',
       badge:'MEMBER BENEFIT',
       disclaimer:'Illustrative tier benefit only. Actual complimentary-seat eligibility depends on member tier, fare, route and Vietnam Airlines rules.'
     },

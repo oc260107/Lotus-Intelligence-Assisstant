@@ -170,9 +170,12 @@ export function searchStarterRoundTrip(
   const passengers = Math.max(1, input.passengers || 1);
   const limit = Math.max(1, Math.min(6, input.limit || 3));
 
+  // `maxPrice` is the total round-trip budget. Do not apply the full budget
+  // independently to each leg or a combo can silently cost up to ~2x the budget.
+  const totalBudget = input.filters?.maxPrice ?? null;
   const commonFilters = {
     passengers,
-    maxPrice: input.filters?.maxPrice ?? null,
+    maxPrice: null,
     maxTransit: input.filters?.maxTransit ?? null,
     minBaggage: input.filters?.minBaggage ?? null,
     directOnly: input.filters?.directOnly ?? null,
@@ -225,6 +228,8 @@ export function searchStarterRoundTrip(
         Math.round(
           ((outbound.rankingScore + returnFlight.rankingScore) / 2) * 10,
         ) / 10;
+
+      if (totalBudget != null && totalPriceAUD > totalBudget) continue;
 
       combos.push({
         id: `${outbound.id}__${returnFlight.id}`,

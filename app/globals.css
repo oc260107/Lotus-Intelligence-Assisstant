@@ -224,3 +224,5 @@ html:lang(vi) .lotus-card h2 {
 .lotus-seat-note p{color:#7e735b;margin-top:4px}
 @media(max-width:767px){.lotus-benefit-grid{grid-template-columns:1fr}.lotus-balance{align-items:flex-start;text-align:left}.lotus-opportunity .between{align-items:flex-start}}
 .lotus-balance small{font-size:9px;color:#a27d34;margin-top:3px}
+
+.seat-button.cabin-locked{opacity:.38;cursor:not-allowed}

@@ -209,7 +209,7 @@ export default function EntryPage() {
 
           <div className="relative z-10 flex items-center gap-3 text-sm text-white/65">
             <LockKeyhole className="h-4 w-4" />
-            <span>{tr("Local prototype · Qwen via Ollama", "Bản mẫu cục bộ · Qwen qua Ollama")}</span>
+            <span>{tr("Prototype · OpenAI-powered LIA", "Prototype · LIA dùng OpenAI")}</span>
           </div>
         </section>
 

@@ -12,6 +12,7 @@ export type SeatPosition='Aisle'|'Window'|'Middle';
 export type SeatSelection={seat:string;cabin:SeatCabin;zone:SeatZone;position:SeatPosition;recommended?:boolean;reason?:string};
 export type RequestedCabin='economy'|'business'|'any';
 export type TicketTraveller={name:string;accountHolder?:boolean;seatSelection?:SeatSelection|null};
+export type LotusmilesAppliedRedemption={id:string;kind:'business-upgrade';baseItineraryId:string;tier:string;startingBalance:number;milesUsed:number;milesPerTraveller:number;remainingBalance:number;cashTaxesAUD:number;taxPerTravellerAUD:number;eligibleFareFamily:string;targetCabin:'business';baggageKg:number;benefits:string[];source:'prototype-lotusmiles'};
 export type StarterSearchFilters={
   maxPrice?:number|null;
   maxTransit?:number|null;
@@ -57,6 +58,7 @@ export type StarterSuggestedItinerary={
   return?:StarterSelectedOffer|null;
   totalPriceAUD:number;
   source:'chat'|'monitoring';
+  lotusmilesRedemption?:LotusmilesAppliedRedemption|null;
 };
 export type StarterPendingSuggestion={
   kind:'switch_departure'|'select_offer';
@@ -98,15 +100,16 @@ export type StarterConversation={
   checkoutStage?:'none'|'offer-payment'|'monitoring';
   suggestedItineraries?:StarterSuggestedItinerary[];
   seatSelection?:SeatSelection|null;
+  lotusmilesRedemption?:LotusmilesAppliedRedemption|null;
   requestedCabin?:RequestedCabin;
   phase?:'collecting'|'searching'|'awaiting-confirmation'|'selected';
 };
 export type RetrievalSummary={source:'synthetic-demo-dataset';datasetSize:number;routeMatches:number;shown:number};
 export type AiRecommendation={offerId:string;summary:string;reasons:string[];tradeoffs:string[];created:string;model:string};
-export type Trip = Intent & {id:string;status:string;selectedOffer?:StarterSelectedOffer|null;selectedReturnOffer?:StarterSelectedOffer|null;searchFilters?:StarterSearchFilters;suggestedItineraries?:StarterSuggestedItinerary[];monitoringSuggestions?:StarterSuggestedItinerary[];seatSelection?:SeatSelection|null;requestedCabin?:RequestedCabin;messages:{role:string;text:string}[];history:{date:string;price:number}[];offers:Offer[];retrieval?:RetrievalSummary;aiRecommendation?:AiRecommendation;checkedAt?:string;feedback?:string;version:number;pendingIntent?:{id:string;patch:Partial<Intent>;baseVersion:number}};
-export type CompletedTicket={id:string;reference:string;paidAt:string;status:'paid-demo';from:string;to:string;passengers:number;seat:string;seatSelection?:SeatSelection|null;travellers?:TicketTraveller[];start?:string;end?:string;outbound?:StarterSelectedOffer|null;return?:StarterSelectedOffer|null;directOffer?:Offer|null;extraBag?:boolean;totalPriceAUD:number};
+export type Trip = Intent & {id:string;status:string;selectedOffer?:StarterSelectedOffer|null;selectedReturnOffer?:StarterSelectedOffer|null;searchFilters?:StarterSearchFilters;suggestedItineraries?:StarterSuggestedItinerary[];monitoringSuggestions?:StarterSuggestedItinerary[];seatSelection?:SeatSelection|null;lotusmilesRedemption?:LotusmilesAppliedRedemption|null;requestedCabin?:RequestedCabin;messages:{role:string;text:string}[];history:{date:string;price:number}[];offers:Offer[];retrieval?:RetrievalSummary;aiRecommendation?:AiRecommendation;checkedAt?:string;feedback?:string;version:number;pendingIntent?:{id:string;patch:Partial<Intent>;baseVersion:number}};
+export type CompletedTicket={id:string;reference:string;paidAt:string;status:'paid-demo';from:string;to:string;passengers:number;seat:string;seatSelection?:SeatSelection|null;travellers?:TicketTraveller[];start?:string;end?:string;outbound?:StarterSelectedOffer|null;return?:StarterSelectedOffer|null;directOffer?:Offer|null;extraBag?:boolean;lotusmilesRedemption?:LotusmilesAppliedRedemption|null;totalPriceAUD:number};
 export type MonitoringOpportunity={kind:'monitoring-match';itineraryId?:string|null;offerId?:string|null;price:number;whyNow:string[]};
 export type Notification={id:string;tripId:string;text:string;read:boolean;kind?:'trip'|'payment'|'opportunity';ticket?:CompletedTicket;opportunity?:MonitoringOpportunity};
 export type State = {trips:Trip[];profile:{name:string;member:boolean;personalize:boolean;notifications:boolean;seat:string;baggage:number;family:boolean;lotusTier?:string;lotusMilesBalance?:number;lotusMilesExpiring?:number};notifications:Notification[];bookings:{id:string;tripId:string;offer:Offer;seat:string;extraBag:boolean;total:number;created:string;status:string}[];preferenceEvidence:PreferenceEvidence[];starter?:StarterConversation};
 export const blankIntent:Intent={name:'',from:'SYD',to:'HAN',start:'2026-12-10',end:'2026-12-28',budget:1200,passengers:1,baggage:23,transit:4,seat:'Aisle'};
-export function initialState(profileName='Traveller'):State {return {trips:[],profile:{name:profileName,member:false,personalize:false,notifications:true,seat:'Aisle',baggage:23,family:false,lotusTier:'Gold',lotusMilesBalance:24500,lotusMilesExpiring:8000},notifications:[],bookings:[],preferenceEvidence:[]};}
+export function initialState(profileName='Traveller'):State {return {trips:[],profile:{name:profileName,member:true,personalize:false,notifications:true,seat:'Aisle',baggage:23,family:false,lotusTier:'Gold',lotusMilesBalance:40000,lotusMilesExpiring:8000},notifications:[],bookings:[],preferenceEvidence:[]};}

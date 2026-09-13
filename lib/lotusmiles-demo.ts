@@ -1,3 +1,5 @@
+import type {LotusmilesAppliedRedemption} from './model';
+
 export type LotusmilesDemoProfile={
   member:boolean;
   lotusTier?:string;
@@ -20,15 +22,43 @@ export type LotusmilesBenefitOption={
   disclaimer:string;
 };
 
-export const LOTUSMILES_DEMO_DEFAULTS={tier:'Gold',balance:24500,expiring:8000};
+export const LOTUSMILES_DEMO_DEFAULTS={tier:'Gold',balance:40000,expiring:8000};
+export const LOTUSMILES_BUSINESS_RULE={milesPerTraveller:18000,taxPerTravellerPerDirectionAUD:92,baggageKg:40,eligibleFareFamily:'Economy Standard / Economy Flex'};
 
 export function lotusBalance(profile:LotusmilesDemoProfile){return Math.max(0,Math.round(profile.lotusMilesBalance??LOTUSMILES_DEMO_DEFAULTS.balance));}
 export function lotusTier(profile:LotusmilesDemoProfile){return profile.lotusTier||LOTUSMILES_DEMO_DEFAULTS.tier;}
 export function lotusExpiring(profile:LotusmilesDemoProfile){return Math.max(0,Math.round(profile.lotusMilesExpiring??LOTUSMILES_DEMO_DEFAULTS.expiring));}
 
+export function buildLotusmilesBusinessUpgrade(profile:LotusmilesDemoProfile,input:{passengers:number;flexibility?:string|null;baseItineraryId:string;directions?:number}):LotusmilesAppliedRedemption|null{
+  const passengers=Math.max(1,Math.round(input.passengers||1));
+  const directions=Math.max(1,Math.min(2,Math.round(input.directions||1)));
+  const balance=lotusBalance(profile),tier=lotusTier(profile),flex=String(input.flexibility||'').toLowerCase();
+  const eligible=!flex.includes('basic');
+  const milesUsed=LOTUSMILES_BUSINESS_RULE.milesPerTraveller*passengers;
+  const cashTaxesAUD=LOTUSMILES_BUSINESS_RULE.taxPerTravellerPerDirectionAUD*passengers*directions;
+  if(!profile.member||!eligible||balance<milesUsed)return null;
+  return {
+    id:`lotus-business:${input.baseItineraryId}`,
+    kind:'business-upgrade',
+    baseItineraryId:input.baseItineraryId,
+    tier,
+    startingBalance:balance,
+    milesUsed,
+    milesPerTraveller:LOTUSMILES_BUSINESS_RULE.milesPerTraveller,
+    remainingBalance:balance-milesUsed,
+    cashTaxesAUD,
+    taxPerTravellerAUD:LOTUSMILES_BUSINESS_RULE.taxPerTravellerPerDirectionAUD*directions,
+    eligibleFareFamily:LOTUSMILES_BUSINESS_RULE.eligibleFareFamily,
+    targetCabin:'business',
+    baggageKg:LOTUSMILES_BUSINESS_RULE.baggageKg,
+    benefits:['Business cabin','Complimentary Business seat selection','Priority check-in & boarding','Business lounge access','40 kg checked baggage'],
+    source:'prototype-lotusmiles'
+  };
+}
+
 export function lotusmilesDemoBenefits(profile:LotusmilesDemoProfile,input:{passengers:number;flexibility?:string|null;requestedCabin?:string|null}) : LotusmilesBenefitOption[]{
   const passengers=Math.max(1,input.passengers||1),balance=lotusBalance(profile),member=!!profile.member,tier=lotusTier(profile);
-  const upgradePerTraveller=18000,upgradeCost=upgradePerTraveller*passengers;
+  const upgradePerTraveller=LOTUSMILES_BUSINESS_RULE.milesPerTraveller,upgradeCost=upgradePerTraveller*passengers;
   const baggagePerTraveller=7500,baggageCost=baggagePerTraveller*passengers;
   const flexibleEnough=!String(input.flexibility||'').toLowerCase().includes('basic');
   const wantsEconomy=String(input.requestedCabin||'').toLowerCase()==='economy';
@@ -36,32 +66,32 @@ export function lotusmilesDemoBenefits(profile:LotusmilesDemoProfile,input:{pass
     {
       id:'demo-business-upgrade',kind:'business-upgrade',
       title:wantsEconomy?'Consider Business with Lotusmiles':'Business upgrade opportunity',
-      description:`Upgrade the outbound cabin to Business in this prototype using ${upgradePerTraveller.toLocaleString('en-AU')} sample miles per traveller.`,
+      description:`Upgrade the itinerary to Business using ${upgradePerTraveller.toLocaleString('en-AU')} miles per traveller.`,
       milesCost:upgradeCost,milesCostPerTraveller:upgradePerTraveller,
       available:member&&flexibleEnough&&balance>=upgradeCost,
-      reason:!member?'Connect the Lotusmiles member experience first.':!flexibleEnough?'This demo treats Basic fares as not upgrade-eligible.':balance<upgradeCost?`Need ${upgradeCost.toLocaleString('en-AU')} sample miles; current sample balance is ${balance.toLocaleString('en-AU')}.`:`Your ${tier} demo context has enough sample miles for this upgrade concept.`,
+      reason:!member?'Connect the Lotusmiles member experience first.':!flexibleEnough?'Basic fares are not upgrade-eligible in this prototype.':balance<upgradeCost?`Need ${upgradeCost.toLocaleString('en-AU')} miles; current balance is ${balance.toLocaleString('en-AU')}.`:`Your ${tier} member balance can cover this Business upgrade.`,
       badge:'SMART UPGRADE',targetCabin:'business',
-      disclaimer:'Illustrative prototype rule only — not an official Vietnam Airlines redemption rate. Live fare-class eligibility, taxes and mileage requirements must be verified by Lotusmiles.'
+      disclaimer:'Prototype redemption rule. Production values must come from authorised Lotusmiles systems.'
     },
     {
       id:'demo-preferred-seat',kind:'preferred-seat',
-      title:'Check preferred-seat member value · demo',
-      description:'Surface preferred-seat eligibility during checkout so the traveller does not need to look up Lotusmiles benefits manually.',
+      title:'Preferred-seat member value',
+      description:'Surface preferred-seat eligibility during checkout so the traveller does not need to look up benefits manually.',
       milesCost:0,milesCostPerTraveller:0,
       available:member,
-      reason:member?`${tier} demo context is active; complimentary or discounted seat eligibility still requires VNA verification.`:'Connect the Lotusmiles member experience first.',
+      reason:member?`${tier} member context is active.`:'Connect the Lotusmiles member experience first.',
       badge:'MEMBER BENEFIT',
-      disclaimer:'Illustrative tier benefit only. Actual complimentary-seat eligibility depends on member tier, fare, route and Vietnam Airlines rules.'
+      disclaimer:'Prototype member-benefit rule.'
     },
     {
       id:'demo-extra-baggage',kind:'extra-baggage',
-      title:'Redeem miles for +10 kg baggage · demo',
-      description:`Use ${baggagePerTraveller.toLocaleString('en-AU')} sample miles per traveller for an illustrative +10 kg baggage redemption.`,
+      title:'Redeem miles for +10 kg baggage',
+      description:`Use ${baggagePerTraveller.toLocaleString('en-AU')} miles per traveller for +10 kg baggage.`,
       milesCost:baggageCost,milesCostPerTraveller:baggagePerTraveller,
       available:member&&balance>=baggageCost,
-      reason:!member?'Connect the Lotusmiles member experience first.':balance<baggageCost?`Need ${baggageCost.toLocaleString('en-AU')} sample miles; current sample balance is ${balance.toLocaleString('en-AU')}.`:`Current sample balance can cover this redemption concept.`,
+      reason:!member?'Connect the Lotusmiles member experience first.':balance<baggageCost?`Need ${baggageCost.toLocaleString('en-AU')} miles; current balance is ${balance.toLocaleString('en-AU')}.`:`Current member balance can cover this redemption.`,
       badge:'REDEEM MILES',
-      disclaimer:'Illustrative prototype rule only — actual baggage redemption rates and eligibility must come from authorised Lotusmiles systems.'
+      disclaimer:'Prototype redemption rule.'
     }
   ];
 }

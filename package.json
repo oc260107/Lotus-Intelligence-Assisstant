@@ -1,9 +1,9 @@
 {
-  "name": "site-creator-vinext-starter",
-  "version": "0.1.0",
+  "name": "lia-lotus-intelligent-assistant",
+  "version": "1.0.0",
   "private": true,
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.13.0 <25"
   },
   "scripts": {
     "install:ci": "bash scripts/install-pnpm.sh",
@@ -13,7 +13,10 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "setup:local": "node scripts/prepare-local.mjs",
-    "test:api": "node tests/api-smoke.mjs"
+    "test:api": "node tests/api-smoke.mjs",
+    "demo": "node scripts/judge-demo.mjs",
+    "verify": "pnpm build && pnpm test:api",
+    "reset:demo": "node scripts/reset-demo.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -62,5 +65,6 @@
     "wrangler": "4.92.0"
   },
   "type": "module",
-  "packageManager": "pnpm@11.19.0"
+  "packageManager": "pnpm@11.19.0",
+  "description": "LIA: a personalised direct-booking assistant prototype for Vietnam Airlines."
 }

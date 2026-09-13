@@ -132,3 +132,132 @@ export function searchStarterFlights(f:StarterSearchFilters):StarterFlightSearch
  const recommended=exact[0]||nearby[0]||nearMisses[0]||null;
  return {requestedDate:f.departureDate||null,routeRows:route.length,exactDateRows:exactRows.length,exactMatches:exact,nearbyMatches:nearby,sameDateNearMisses:nearMisses,recommended,recommendationBasis:exact.length?'exact':nearby.length?'nearby':nearMisses.length?'near-miss':'none'};
 }
+
+export type StarterRoundTripCombo = {
+  id: string;
+  outbound: StarterFlightCandidate;
+  return: StarterFlightCandidate;
+  totalPriceAUD: number;
+  totalDurationMinutes: number;
+  totalTransitMinutes: number;
+  rankingScore: number;
+};
+
+export type StarterRoundTripSearchInput = {
+  from: string;
+  to: string;
+  startDate: string;
+  endDate: string;
+  dateMode?: 'fixed' | 'window';
+  passengers?: number;
+  filters?: {
+    maxPrice?: number | null;
+    maxTransit?: number | null;
+    minBaggage?: number | null;
+    directOnly?: boolean | null;
+    requireTransit?: boolean | null;
+    transitVia?: string | null;
+    excludeChina?: boolean | null;
+    sortBy?: StarterSearchSort;
+    limit?: number;
+  };
+  limit?: number;
+};
+
+export function searchStarterRoundTrip(
+  input: StarterRoundTripSearchInput,
+) {
+  const passengers = Math.max(1, input.passengers || 1);
+  const limit = Math.max(1, Math.min(6, input.limit || 3));
+
+  const commonFilters = {
+    passengers,
+    maxPrice: input.filters?.maxPrice ?? null,
+    maxTransit: input.filters?.maxTransit ?? null,
+    minBaggage: input.filters?.minBaggage ?? null,
+    directOnly: input.filters?.directOnly ?? null,
+    transitVia: input.filters?.transitVia ?? null,
+    sortBy: input.filters?.sortBy || 'best',
+    limit,
+  };
+
+  const outboundResult = searchStarterFlights({
+    ...commonFilters,
+    from: input.from,
+    to: input.to,
+    departureDate: input.startDate,
+  });
+
+  const returnResult = searchStarterFlights({
+    ...commonFilters,
+    from: input.to,
+    to: input.from,
+    departureDate: input.endDate,
+  });
+
+  const outboundFlights = outboundResult.exactMatches.length
+    ? outboundResult.exactMatches
+    : outboundResult.nearbyMatches;
+
+  const returnFlights = returnResult.exactMatches.length
+    ? returnResult.exactMatches
+    : returnResult.nearbyMatches;
+
+  const combos: StarterRoundTripCombo[] = [];
+
+  for (const outbound of outboundFlights) {
+    for (const returnFlight of returnFlights) {
+      const totalPriceAUD =
+        outbound.totalPriceAUD + returnFlight.totalPriceAUD;
+
+      const totalDurationMinutes =
+        outbound.totalDurationMinutes +
+        returnFlight.totalDurationMinutes;
+
+      const totalTransitMinutes =
+        outbound.transitMinutes +
+        returnFlight.transitMinutes;
+
+      const rankingScore =
+        Math.round(
+          ((outbound.rankingScore + returnFlight.rankingScore) / 2) * 10,
+        ) / 10;
+
+      combos.push({
+        id: `${outbound.id}__${returnFlight.id}`,
+        outbound,
+        return: returnFlight,
+        totalPriceAUD,
+        totalDurationMinutes,
+        totalTransitMinutes,
+        rankingScore,
+      });
+    }
+  }
+
+  const sortBy = input.filters?.sortBy || 'best';
+
+  if (sortBy === 'price') {
+    combos.sort((a, b) => a.totalPriceAUD - b.totalPriceAUD);
+  } else if (sortBy === 'duration') {
+    combos.sort(
+      (a, b) => a.totalDurationMinutes - b.totalDurationMinutes,
+    );
+  } else if (sortBy === 'transit') {
+    combos.sort(
+      (a, b) => a.totalTransitMinutes - b.totalTransitMinutes,
+    );
+  } else {
+    combos.sort(
+      (a, b) =>
+        b.rankingScore - a.rankingScore ||
+        a.totalPriceAUD - b.totalPriceAUD,
+    );
+  }
+
+  return {
+    combos: combos.slice(0, limit),
+    routeRowsOutbound: outboundResult.routeRows,
+    routeRowsReturn: returnResult.routeRows,
+  };
+}

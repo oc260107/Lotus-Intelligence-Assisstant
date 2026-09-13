@@ -43,7 +43,7 @@ export function failure(error: unknown) {
                 ? 'Your protected profile could not be opened. Check the local profile encryption key.'
                 : m.startsWith('VALIDATION:')
                   ? m.slice(11)
-                  : 'Unable to save right now. Your input is still available; please try again.',
+                  : m || 'Unable to save right now. Your input is still available; please try again.',
     },
     {
       status:

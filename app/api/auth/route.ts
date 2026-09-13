@@ -11,6 +11,7 @@ import {
   type AuthIdentity,
 } from '@/lib/auth';
 import { mutationGuard } from '@/lib/server';
+import { claimPendingTravellerProfile } from '@/lib/pending-traveller-profile';
 
 const credentialsSchema = z.object({
   identifierType: z.enum(['email', 'phone']),
@@ -206,8 +207,14 @@ export async function POST(request: Request) {
       }
 
       await promoteGuestData(priorIdentity, userId, parsed.data.name);
+      let claimedPreAccountProfile = false;
+      try {
+        claimedPreAccountProfile = !!(await claimPendingTravellerProfile(userId, email, phone));
+      } catch (claimError) {
+        console.error('Could not claim pending traveller profile after registration', claimError);
+      }
       const cookie = await createSession(request, { kind: 'user', userId });
-      return authJson({ ok: true, user: { kind: 'user', name: parsed.data.name, email, phone } }, 201, cookie);
+      return authJson({ ok: true, user: { kind: 'user', name: parsed.data.name, email, phone }, claimedPreAccountProfile }, 201, cookie);
     }
 
     const parsed = credentialsSchema.safeParse(body);

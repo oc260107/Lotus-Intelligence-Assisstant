@@ -168,3 +168,59 @@ html:lang(vi) .lotus-card h2 {
   .guest-auth-actions .primary,.guest-auth-actions .secondary{padding:7px 8px;font-size:10px}
   .guest-profile-actions .primary,.guest-profile-actions .secondary{flex:1}
 }
+
+/* Demo seat selector */
+.seat-dialog{max-width:min(860px,calc(100vw - 32px))!important;max-height:92vh;overflow:auto}
+.seat-recommendation{display:flex;gap:12px;align-items:flex-start;background:#eef8f8;border:1px solid #cfe5e8;border-radius:10px;padding:14px;color:#245d67}
+.seat-map{width:min(520px,100%);margin:6px auto 0;background:#fbfcfc;border:1px solid #dbe6e8;border-radius:80px 80px 20px 20px;padding:22px 18px 26px;box-shadow:inset 0 0 0 5px #f4f8f8}
+.seat-map-nose{height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#6e858c;gap:5px;font-size:9px;letter-spacing:1.6px;border-bottom:1px dashed #d9e4e6;margin-bottom:14px}
+.seat-cabin{padding:12px 8px 16px;border-radius:12px;margin-top:10px}
+.seat-cabin.business{background:#fbf5e8;border:1px solid #eadab8}
+.seat-cabin.economy{background:#f3f9fa;border:1px solid #d9e9eb}
+.seat-cabin.economy-saver{background:#f7f7f7;border:1px solid #e3e7e8}
+.seat-cabin-title{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:10px;padding:0 6px}
+.seat-cabin-title strong{font-size:13px;color:#294a54}.seat-cabin-title span{font-size:10px;color:#81949a}
+.seat-row{display:grid;grid-template-columns:22px 1fr 34px 1fr;align-items:center;gap:5px;min-height:38px}
+.seat-row-number,.seat-aisle{text-align:center;color:#91a0a5;font-size:10px}.seat-aisle{font-size:9px}
+.seat-side{display:grid;grid-template-columns:repeat(3,minmax(34px,1fr));gap:6px}.seat-cabin.business .seat-side{grid-template-columns:repeat(2,minmax(42px,1fr))}
+.seat-button{height:31px;border:1px solid #a8c6ca;border-radius:7px;background:#fff;color:#2f6871;font-size:10px;font-weight:700;box-shadow:0 1px 2px #173f4b0d}
+.seat-button:hover:not(:disabled){border-color:#00788c;background:#edf8fa}.seat-button.selected{background:#00788c;color:#fff;border-color:#00788c;box-shadow:0 0 0 3px #bfe1e5}
+.seat-button.occupied,.seat-button:disabled{background:#e7ebec;color:#a4afb2;border-color:#d8dfe1;opacity:1;cursor:not-allowed;text-decoration:line-through}
+.seat-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;padding:12px;border-radius:9px;background:#fff;font-size:10px;color:#6f858c}.seat-legend span{display:flex;align-items:center;gap:6px}.legend-seat{width:14px;height:14px;border-radius:4px;border:1px solid #a8c6ca;background:#fff}.legend-seat.selected{background:#00788c;border-color:#00788c}.legend-seat.occupied{background:#e7ebec;border-color:#d8dfe1}
+@media(max-width:640px){.seat-map{padding:16px 10px 22px;border-radius:48px 48px 16px 16px}.seat-row{grid-template-columns:18px 1fr 24px 1fr}.seat-side{gap:4px}.seat-button{height:30px;font-size:9px}.seat-cabin-title{align-items:flex-start;flex-direction:column;gap:3px}}
+.passenger-stack{display:flex;flex-direction:column;gap:14px}.passenger-card{border:1px solid #dfe8eb;border-radius:12px;background:#fbfdfd;padding:16px}.passenger-seat-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.passenger-seat-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:1px solid #d8e4e6;border-radius:9px;background:#fff;padding:10px 12px;text-align:left;color:#456770}.passenger-seat-tabs button>span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#edf5f6;color:#247386;font-size:10px;font-weight:700}.passenger-seat-tabs button strong{font-size:12px;color:#284b55}.passenger-seat-tabs button small{font-size:10px;color:#87999f}.passenger-seat-tabs button.active{border-color:#00788c;box-shadow:0 0 0 2px #cce7ea;background:#f2fbfc}.passenger-seat-tabs button.active>span{background:#00788c;color:#fff}
+
+
+/* P0 rubric features: direct value proof + personalised opportunity alerts */
+.direct-value-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.lotus-value-panel,.personalised-value-panel{border:1px solid #dce8ea;border-radius:10px;padding:16px;background:#fff}
+.lotus-value-panel{border-top:3px solid #c9a44f;background:#fffdf7}
+.personalised-value-panel{border-top:3px solid #078092;background:#f6fbfc}
+.lotus-value-panel h3,.personalised-value-panel h3{margin-top:5px}
+.lotus-value-panel .benefits,.personalised-value-panel .benefits{margin:12px 0 0}
+.lotus-value-panel .benefits li,.personalised-value-panel .benefits li{margin:8px 0}
+.notification-reasons{display:flex;flex-direction:column;gap:4px;margin-top:6px;color:#55747c;font-size:12px;line-height:1.45}
+.notification-cta{display:inline-flex;align-items:center;gap:5px;margin-top:10px;color:#00788c;font-size:12px;font-weight:700}
+@media(max-width:767px){.direct-value-grid{grid-template-columns:1fr}}
+
+/* Lotusmiles smart-value layer (demo only; does not replace the core flight ranking) */
+.lotus-opportunity{border:1px solid #e3d5ac;border-top:3px solid #c9a44f;border-radius:11px;background:#fffdf7;padding:16px;margin:14px 0;color:#38545c}
+.lotus-opportunity.compact{padding:13px 15px;margin:10px 0}
+.lotus-opportunity h3{margin-top:5px;color:#274750}
+.lotus-balance{display:flex;flex-direction:column;align-items:flex-end;text-align:right;min-width:130px}
+.lotus-balance strong{font-size:22px;line-height:1;color:#8b6a29;font-weight:600}
+.lotus-balance span{font-size:10px;color:#8b7a56;margin-top:5px}
+.lotus-highlight{display:flex;align-items:flex-start;gap:10px;padding:13px;border-radius:9px;background:#fff7df;border:1px solid #ead8a7;color:#6c5729}
+.lotus-highlight>svg{flex-shrink:0;margin-top:1px;color:#b38a32}
+.lotus-highlight p{color:#796d54}
+.lotus-benefit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lotus-benefit-grid>div{background:#fff;border:1px solid #e8e1cf;border-radius:9px;padding:12px}
+.lotus-benefit-grid strong{font-size:12px;color:#395660}.lotus-benefit-grid p{margin-top:5px}
+.lotus-demo-settings{border:1px solid #e3d5ac;border-radius:10px;background:#fffdf7;padding:15px;margin-bottom:18px}
+.lotus-mini-benefits{margin:12px 0 18px;padding-left:18px;color:#c4dadd;font-size:12px;line-height:1.65}
+.lotus-mini-benefits li{margin:6px 0}
+.lotus-seat-note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #e3d5ac;border-radius:9px;background:#fffdf7;color:#6d5b32;margin:12px 0}
+.lotus-seat-note>svg{flex-shrink:0;margin-top:1px;color:#b38a32}
+.lotus-seat-note p{color:#7e735b;margin-top:4px}
+@media(max-width:767px){.lotus-benefit-grid{grid-template-columns:1fr}.lotus-balance{align-items:flex-start;text-align:left}.lotus-opportunity .between{align-items:flex-start}}
+.lotus-balance small{font-size:9px;color:#a27d34;margin-top:3px}

@@ -70,3 +70,21 @@ export const userProfiles = sqliteTable(
   },
   (t) => [uniqueIndex('idx_user_profiles_document_fingerprint').on(t.documentFingerprint)],
 );
+
+export const pendingTravellerProfiles = sqliteTable(
+  'pending_traveller_profiles',
+  {
+    id: text('id').primaryKey(),
+    lookupHash: text('lookup_hash').notNull(),
+    documentFingerprint: text('document_fingerprint').notNull(),
+    encryptedPayload: text('encrypted_payload').notNull(),
+    consentedByUserId: text('consented_by_user_id').notNull(),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex('idx_pending_traveller_lookup_hash').on(t.lookupHash),
+    uniqueIndex('idx_pending_traveller_document_fingerprint').on(t.documentFingerprint),
+  ],
+);
+

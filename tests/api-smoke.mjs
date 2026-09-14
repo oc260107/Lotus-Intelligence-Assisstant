@@ -14,6 +14,7 @@ for (const migration of [
   'drizzle/0003_auth_phone.sql',
   'drizzle/0004_user_profile.sql',
   'drizzle/0005_unique_identity_document.sql',
+  'drizzle/0006_pending_traveller_profiles.sql',
 ]) {
   sqlite.exec(readFileSync(migration, 'utf8').replaceAll('--> statement-breakpoint', ''));
 }

@@ -6,42 +6,56 @@ This repository is a **functional demo/MVP**. It does **not** connect to live Vi
 
 ---
 
-## 1. Judge setup — one command
+## 1. Judge setup — recommended stable path
 
 ### Prerequisites
 
 Install:
 
 - **Node.js 22.13+ or Node.js 24.x**
+- **pnpm 11.19.0**
 - Internet access for the first dependency install
 - Optional, for the full conversational-AI demo: an **OpenAI API key** that can access the configured model
 
 A Cloudflare account is **not** required. The app uses local Wrangler/Miniflare with local D1 and R2 bindings.
 
-### Fastest setup
+If `pnpm` is not installed yet:
+
+```bash
+npm install -g pnpm@11.19.0
+```
+
+### Recommended first run
 
 From the repository root:
 
 ```bash
-npm run demo
+pnpm install --frozen-lockfile
+pnpm setup:local
+pnpm dev
 ```
 
-This command is the recommended evaluator path. It automatically:
+Then open:
 
-1. checks the Node version;
-2. uses the pinned `pnpm@11.19.0` toolchain through `npx`;
-3. installs dependencies from `pnpm-lock.yaml` with a frozen lockfile;
-4. creates `.dev.vars` from the safe template if needed;
-5. generates a private local `PROFILE_ENCRYPTION_KEY` if it is blank;
-6. builds the application;
-7. applies all local D1 migrations;
-8. starts the app at **http://localhost:5173/**.
+```text
+http://localhost:5173/
+```
 
-Press `Ctrl+C` to stop it.
+For **Windows Command Prompt**, the same first-run setup can be run on one line:
+
+```bat
+pnpm install --frozen-lockfile && pnpm setup:local && pnpm dev
+```
+
+`pnpm setup:local` prepares the local environment, generates `PROFILE_ENCRYPTION_KEY` when required, builds the application, and applies the local D1 migrations. `pnpm dev` then starts the same LIA application used during development.
+
+> **Windows note:** use the `pnpm` commands above as the recommended evaluator path. The repository may contain a legacy `npm run demo` helper, but it is not required and should not be used as the primary Windows setup path.
+
+Press `Ctrl+C` to stop the development server.
 
 ### Enable the OpenAI features
 
-The application can start without an OpenAI key. Deterministic ranking, synthetic flights, Trip Threads, monitoring, seat selection, Lotusmiles demo logic and the booking flow still work. Natural-language intent interpretation and AI-generated explanations require a key.
+The application can start without an OpenAI key. Deterministic ranking, synthetic flights, Trip Threads, monitoring, seat selection, Lotusmiles demo logic and the booking flow still work. **Natural-language chat intent interpretation and AI-generated explanations require a valid OpenAI API key.**
 
 Create the local secret file:
 
@@ -49,6 +63,13 @@ Create the local secret file:
 
 ```powershell
 Copy-Item .dev.vars.example .dev.vars
+notepad .dev.vars
+```
+
+**Windows Command Prompt**
+
+```bat
+copy .dev.vars.example .dev.vars
 notepad .dev.vars
 ```
 
@@ -66,24 +87,9 @@ OPENAI_MODEL=gpt-5.6-terra
 PROFILE_ENCRYPTION_KEY=
 ```
 
-Leave `PROFILE_ENCRYPTION_KEY` blank on first setup; the local setup script generates one automatically.
+Leave `PROFILE_ENCRYPTION_KEY` blank on the first setup if needed; `pnpm setup:local` generates a local key automatically. After changing `.dev.vars`, restart `pnpm dev`.
 
-Alternatively, for a temporary evaluator session:
-
-**PowerShell**
-
-```powershell
-$env:OPENAI_API_KEY="your_own_key_here"
-npm run demo
-```
-
-**macOS / Linux**
-
-```bash
-OPENAI_API_KEY="your_own_key_here" npm run demo
-```
-
-The launcher writes the shell-provided key only to the git-ignored local `.dev.vars` file so the local Cloudflare runtime can read it.
+`.dev.vars` is local-only and should never be committed to GitHub. The repository should contain only `.dev.vars.example` with blank placeholders.
 
 OpenAI model/API documentation: https://platform.openai.com/docs/models
 
@@ -117,12 +123,20 @@ Receipt + notification + completed journey state
 
 If the customer is not ready to pay, the selected itinerary can instead become a monitored Travel Intent. A later demo check re-ranks suitable options, explains **why** the leading option matches the traveller, and creates a personalised “Why now?” notification that can reopen the booking flow.
 
-### Repository + one-command setup instructions
+### Repository + reproducible setup instructions
 
-The reproducible judge command is:
+The recommended evaluator setup is:
 
 ```bash
-npm run demo
+pnpm install --frozen-lockfile
+pnpm setup:local
+pnpm dev
+```
+
+On Windows Command Prompt, the same sequence can be run on one line:
+
+```bat
+pnpm install --frozen-lockfile && pnpm setup:local && pnpm dev
 ```
 
 Reproducibility is supported by:
@@ -135,12 +149,10 @@ Reproducibility is supported by:
 - a generated local encryption key stored only in ignored `.dev.vars`;
 - local Cloudflare D1/R2 bindings defined in source, with no private hosted-project identifier required.
 
-The equivalent manual setup is:
+If `pnpm` is not installed, install the pinned version first:
 
 ```bash
-npx --yes pnpm@11.19.0 install --frozen-lockfile
-npx --yes pnpm@11.19.0 setup:local
-npx --yes pnpm@11.19.0 dev
+npm install -g pnpm@11.19.0
 ```
 
 Then open:
@@ -310,20 +322,20 @@ This deletes only generated local runtime/database state and then rebuilds/reapp
 
 This normally means the package-registry connection was interrupted, DNS failed temporarily, or a VPN/proxy/firewall is interfering. It is not normally an application-code error.
 
-Retry first:
+Retry the dependency install first:
 
 ```bash
-npm run demo
+pnpm install --frozen-lockfile
 ```
 
 If it persists:
 
 ```bash
-npx --yes pnpm@11.19.0 config set registry https://registry.npmjs.org/
-npx --yes pnpm@11.19.0 config delete proxy
-npx --yes pnpm@11.19.0 config delete https-proxy
-npx --yes pnpm@11.19.0 store prune
-npx --yes pnpm@11.19.0 install --frozen-lockfile
+pnpm config set registry https://registry.npmjs.org/
+pnpm config delete proxy
+pnpm config delete https-proxy
+pnpm store prune
+pnpm install --frozen-lockfile
 ```
 
 Also try:
@@ -351,7 +363,7 @@ set NODE_OPTIONS=
 set CLOUDFLARE_CF_FETCH_ENABLED=false
 set WRANGLER_SEND_METRICS=false
 
-npm run demo
+pnpm dev
 ```
 
 Do **not** delete `.wrangler/state` unless you intentionally want to remove all local demo accounts/history.
@@ -381,7 +393,7 @@ Restart the dev server after changing `.dev.vars`.
 Apply migrations again:
 
 ```bash
-npx --yes pnpm@11.19.0 setup:local
+pnpm setup:local
 ```
 
 For a disposable fresh demo:
@@ -432,7 +444,7 @@ Use Node 22.13+ or Node 24.x:
 node -v
 ```
 
-The demo launcher intentionally stops early on unsupported versions instead of failing later with an obscure runtime error.
+Using the supported Node range avoids obscure Vinext/Wrangler runtime failures.
 
 ---
 
@@ -445,7 +457,7 @@ lib/                    ranking, OpenAI client, auth, crypto, model logic
 data/                   synthetic flight dataset
 db/                     Drizzle schema
 drizzle/                ordered D1 migrations (0000–0006)
-scripts/                local setup, reset and judge launcher
+scripts/                local setup, reset and support utilities
 tests/                  API smoke tests
 public/                 static assets
 .dev.vars.example       safe local-secret template

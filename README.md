@@ -27,7 +27,28 @@ npm install -g pnpm@11.19.0
 
 ### Recommended first run
 
-From the repository root:
+From the repository root, install the locked dependencies:
+
+```bash
+pnpm install --frozen-lockfile
+```
+
+On a fresh installation, pnpm may block native dependency build scripts for security and show `ERR_PNPM_IGNORED_BUILDS`. If that happens, run:
+
+```bash
+pnpm approve-builds
+```
+
+When prompted, approve the native dependencies required by this project:
+
+```text
+esbuild
+sharp
+unrs-resolver
+workerd
+```
+
+Then complete setup and start the application:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -41,13 +62,17 @@ Then open:
 http://localhost:5173/
 ```
 
-For **Windows Command Prompt**, the same first-run setup can be run on one line:
+For **Windows Command Prompt**, run the same commands one by one:
 
 ```bat
-pnpm install --frozen-lockfile && pnpm setup:local && pnpm dev
+pnpm install --frozen-lockfile
+pnpm approve-builds
+pnpm install --frozen-lockfile
+pnpm setup:local
+pnpm dev
 ```
 
-`pnpm setup:local` prepares the local environment, generates `PROFILE_ENCRYPTION_KEY` when required, builds the application, and applies the local D1 migrations. `pnpm dev` then starts the same LIA application used during development.
+`pnpm approve-builds` is normally required only on a fresh dependency installation when pnpm blocks native build scripts. `pnpm setup:local` prepares the local environment, generates `PROFILE_ENCRYPTION_KEY` when required, builds the application, and applies the local D1 migrations. `pnpm dev` then starts the same LIA application used during development.
 
 > **Windows note:** use the `pnpm` commands above as the recommended evaluator path. The repository may contain a legacy `npm run demo` helper, but it is not required and should not be used as the primary Windows setup path.
 
@@ -129,15 +154,13 @@ The recommended evaluator setup is:
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm approve-builds   # only if pnpm reports ERR_PNPM_IGNORED_BUILDS on a fresh install
+pnpm install --frozen-lockfile
 pnpm setup:local
 pnpm dev
 ```
 
-On Windows Command Prompt, the same sequence can be run on one line:
-
-```bat
-pnpm install --frozen-lockfile && pnpm setup:local && pnpm dev
-```
+On Windows Command Prompt, run the same sequence one command at a time. `pnpm approve-builds` is interactive and is only needed when pnpm blocks required native build scripts such as `esbuild`, `sharp`, `unrs-resolver` or `workerd`.
 
 Reproducibility is supported by:
 
@@ -317,6 +340,33 @@ This deletes only generated local runtime/database state and then rebuilds/reapp
 ---
 
 ## 5. Troubleshooting
+
+### `ERR_PNPM_IGNORED_BUILDS` during install or `pnpm setup:local`
+
+On a fresh pnpm installation, native dependency build scripts may be blocked until explicitly approved. If you see `ERR_PNPM_IGNORED_BUILDS`, run:
+
+```bash
+pnpm approve-builds
+```
+
+Approve the required packages when prompted:
+
+```text
+esbuild
+sharp
+unrs-resolver
+workerd
+```
+
+Then retry:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm setup:local
+pnpm dev
+```
+
+This approval step is a pnpm supply-chain security control and is normally needed only on a fresh dependency installation.
 
 ### `ECONNRESET`, `EAI_AGAIN`, DNS or registry errors during install
 
